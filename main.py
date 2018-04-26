@@ -55,8 +55,6 @@ class AppWindow(QDialog):
     # prepare window
     def __init__(self):
 
-
-
         # init window
         super().__init__()
         self.ui = Ui_Dialog()
@@ -65,6 +63,13 @@ class AppWindow(QDialog):
         #prep
         self.ui.tabWidget.setCurrentIndex(0)
 
+        # set validator to arrayM
+        reg_ex = QRegExp("(\d{1}[\.]?\d{0,5} {1})*")
+        validatorArrayHi = QRegExpValidator(reg_ex, self.ui.Hi)
+        validatorArrayHiA = QRegExpValidator(reg_ex, self.ui.HiA)
+        self.ui.Hi.setValidator(validatorArrayHi)
+        self.ui.HiA.setValidator(validatorArrayHiA)
+
         if self.ui.q6Value.isVisible() == True:
             self.ui.q6Value.setVisible(False)
         if self.ui.label_12.isVisible() == True:
@@ -72,18 +77,24 @@ class AppWindow(QDialog):
 
         self.ui.formulTab.setPixmap(QPixmap(str(1) + '.jpg').scaled(QSize(600, 100)))
 
+        #Выбор схемы
         self.idxScheme = 0
+
+        #выбор задачи
         self.idxVar = 0
 
+        #pictures init
         self.ui.showSchemeFirst.setPixmap(QPixmap('0scheme.png').scaled(QSize(600, 200)))
         self.ui.showFormulaFirst.setPixmap(QPixmap('0formula.png').scaled(QSize(600, 100)))
-
+        self.ui.formula_label.setPixmap(QPixmap('0formula3t.jpg').scaled(QSize(600, 100)))
 
         # connects
         self.ui.chooseScheme.activated[int].connect(self.schemeChanged)
         self.ui.buttonFirst.clicked.connect(lambda: self.buttonFirstPressed())
         self.ui.variantIdx.activated[int].connect(self.problemChanged)
         self.ui.buttonTab.clicked.connect(lambda: self.solveProblem())
+        self.ui.chooseFormula.activated[int].connect(self.formulaChanged)
+        self.ui.pushButton.clicked.connect(lambda: self.solveBayesAndFull())
 
        # self.ui.chooseLang.activated[int].connect(self.langChanged)
        # self.ui.buttonTab.clicked.connect(lambda: self.tabPressed())
@@ -143,7 +154,57 @@ class AppWindow(QDialog):
         self.ui.resultTab.setText(str(res))
 
 
+    #Baes and full probability
+    #formula choose
+    def formulaChanged(self, idx):
+        self.ui.formula_label.setPixmap(QPixmap(str(idx) + 'formula3t.jpg').scaled(QSize(600, 100+50*idx)))
 
+    #full probability solve
+    def Full(self, arrayHi, arrayHiA):
+        res = 1
+        for i in range(len(arrayHi)):
+            res *= float(arrayHi[i]) * float(arrayHiA[i])
+        return res
+
+    #Bayes solve
+    def Bayes(self, arrayHi, arrayHiA, A):
+        res = self.Full(arrayHi, arrayHiA)
+        res /= float(A)
+        return res
+
+
+
+
+    #Solve Bayes and full probability
+    def solveBayesAndFull(self):
+        # parse text
+        string = self.ui.Hi.text()
+        arrayHi = string.split()
+        string = self.ui.HiA.text()
+        arrayHiA = string.split()
+
+        #check count
+        if len(arrayHi) != self.ui.spinBox.value():
+            # show error
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText('Количество вероятностей гипотез P(Hi) не равно количеству событий!')
+            msg.exec_()
+        elif len(arrayHiA) != self.ui.spinBox.value():
+            # show error
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText('Количество условных вероятностей гипотез PHi(A) не равно количеству событий!')
+            msg.exec_()
+        # show result
+        else:
+            if self.ui.chooseFormula.currentIndex() == 0:
+                self.ui.textBrowser.setText(str(self.Full(arrayHi, arrayHiA)))
+            else:
+                string = ''
+                for i in range(self.ui.spinBox.value()):
+                    string += 'P(H' + str(i) + ') = ' + str(self.Bayes(arrayHi, arrayHiA, arrayHi[i])) + '; '
+                self.ui.textBrowser.setText(string)
 
 # show window
 app = QApplication(sys.argv)

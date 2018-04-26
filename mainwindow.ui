@@ -488,15 +488,15 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox">
+          <widget class="QComboBox" name="chooseFormula">
            <item>
             <property name="text">
-             <string>Формула Байеса</string>
+             <string>Формула полной вероятности</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Формула полной вероятности</string>
+             <string>Формула Байеса</string>
             </property>
            </item>
           </widget>
@@ -530,7 +530,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit"/>
+          <widget class="QLineEdit" name="Hi"/>
          </item>
          <item>
           <widget class="QLabel" name="label_5">
@@ -540,7 +540,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_2"/>
+          <widget class="QLineEdit" name="HiA"/>
          </item>
         </layout>
        </item>
