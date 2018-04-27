@@ -64,11 +64,15 @@ class AppWindow(QDialog):
         self.ui.tabWidget.setCurrentIndex(0)
 
         # set validator to arrayM
-        reg_ex = QRegExp("(\d{1}[\.]?\d{0,5} {1})*")
+        reg_ex = QRegExp("(\d{1}([\.]{1}\d{1,5})? {1})*")
+        reg_ex2 = QRegExp("(\d{1,5} {1})*")
         validatorArrayHi = QRegExpValidator(reg_ex, self.ui.Hi)
         validatorArrayHiA = QRegExpValidator(reg_ex, self.ui.HiA)
+        validatorOutH = QRegExpValidator(reg_ex2, self.ui.lineEdit_3)
         self.ui.Hi.setValidator(validatorArrayHi)
         self.ui.HiA.setValidator(validatorArrayHiA)
+        self.ui.lineEdit_3.setValidator(validatorOutH)
+
 
         if self.ui.q6Value.isVisible() == True:
             self.ui.q6Value.setVisible(False)
@@ -158,6 +162,20 @@ class AppWindow(QDialog):
     #formula choose
     def formulaChanged(self, idx):
         self.ui.formula_label.setPixmap(QPixmap(str(idx) + 'formula3t.jpg').scaled(QSize(600, 100+50*idx)))
+        if idx == 0:
+            if self.ui.checkBox.isVisible() == True:
+                self.ui.checkBox.setVisible(False)
+            if self.ui.label_16.isVisible() == True:
+                self.ui.label_16.setVisible(False)
+            if self.ui.lineEdit_3.isVisible() == True:
+                self.ui.lineEdit_3.setVisible(False)
+        else:
+            if self.ui.checkBox.isVisible() == False:
+                self.ui.checkBox.setVisible(True)
+            if self.ui.label_16.isVisible() == False:
+                self.ui.label_16.setVisible(True)
+            if self.ui.lineEdit_3.isVisible() == False:
+                self.ui.lineEdit_3.setVisible(True)
 
     #full probability solve
     def Full(self, arrayHi, arrayHiA):
@@ -172,8 +190,23 @@ class AppWindow(QDialog):
         res /= float(A)
         return res
 
+    #check sum of P(Hi)
+    def checkPSum(self, arrayP):
+        sumP = 0
+        for i in range(len(arrayP)):
+            sumP += float(arrayP[i])
+        if sumP == 1:
+            return True
+        else:
+            return False
 
-
+    #check all PHi(A)
+    def checkAllPHiA(self, arrayHiA):
+        for i in range(len(arrayHiA)):
+            if int(arrayHiA[i]) > 1 or int(arrayHiA[i]) < 0:
+                return False
+            else:
+                return True
 
     #Solve Bayes and full probability
     def solveBayesAndFull(self):
@@ -196,15 +229,55 @@ class AppWindow(QDialog):
             msg.setIcon(QMessageBox.Warning)
             msg.setText('Количество условных вероятностей гипотез PHi(A) не равно количеству событий!')
             msg.exec_()
+        #check sum of P(Hi)
+        elif (self.checkPSum(arrayHi) == False):
+           # show error
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText('Сумма вероятностей гипотез P(Hi) не равна единице!')
+            msg.exec_()
+        #check all PHi(A)
+        elif self.checkAllPHiA(arrayHiA) == False:
+            # show error
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText('Вероятность не может быть меньше нуля или больше единицы!')
+            msg.exec_()
         # show result
         else:
             if self.ui.chooseFormula.currentIndex() == 0:
                 self.ui.textBrowser.setText(str(self.Full(arrayHi, arrayHiA)))
             else:
-                string = ''
-                for i in range(self.ui.spinBox.value()):
-                    string += 'P(H' + str(i) + ') = ' + str(self.Bayes(arrayHi, arrayHiA, arrayHi[i])) + '; '
-                self.ui.textBrowser.setText(string)
+                if self.ui.checkBox.isChecked():
+                    string = self.ui.lineEdit_3.text()
+                    outH = string.split()
+                    if len(outH) > self.ui.spinBox.value():
+                        # show error
+                        msg = QMessageBox()
+                        msg.setIcon(QMessageBox.Warning)
+                        msg.setText('Количество выбранных гипотез PHi(A) больше количества событий!')
+                        msg.exec_()
+                    else:
+                        err = False
+                        string = ''
+                        for i in range(len(outH)):
+                            if int(outH[i]) > self.ui.spinBox.value():
+                                # show error
+                                msg = QMessageBox()
+                                msg.setIcon(QMessageBox.Warning)
+                                msg.setText('Не существует гипотезы с номером ' + str(outH[i]) + '!')
+                                msg.exec_()
+                                err = True
+                            else:
+                                string += 'P(H' + str(outH[i]) + ') = ' + str(self.Bayes(arrayHi, arrayHiA, arrayHi[int(outH[i])-1])) + '; '
+                        if err != True:
+                            self.ui.textBrowser.setText(string)
+                else:
+                    string = ''
+                    for i in range(self.ui.spinBox.value()):
+                        string += 'P(H' + str(i+1) + ') = ' + str(self.Bayes(arrayHi, arrayHiA, arrayHi[i])) + '; '
+                    self.ui.textBrowser.setText(string)
+
 
 # show window
 app = QApplication(sys.argv)
